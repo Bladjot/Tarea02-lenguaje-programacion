@@ -14,15 +14,18 @@ import csv
 import statistics
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
 VALID_MODES = {"especulativo", "secuencial"}
 
 
-def load_totals(path: Path) -> Dict[str, List[float]]:
+def load_totals(path: Path) -> Tuple[Dict[str, List[float]], Dict[str, List[int]]]:
     """Carga los tiempos totales por modo desde el CSV."""
     per_mode: Dict[str, Dict[int, float]] = defaultdict(dict)
 
@@ -47,14 +50,25 @@ def load_totals(path: Path) -> Dict[str, List[float]]:
                 continue
 
     durations: Dict[str, List[float]] = {}
+    run_indices: Dict[str, List[int]] = {}
     for mode, runs in per_mode.items():
-        durations[mode] = [runs[idx] for idx in sorted(runs.keys())]
-    return durations
+        sorted_runs = sorted(runs.keys())
+        run_indices[mode] = sorted_runs
+        durations[mode] = [runs[idx] for idx in sorted_runs]
+    return durations, run_indices
 
 
-def build_figure(data: Dict[str, List[float]], title: str) -> plt.Figure:
-    """Devuelve una figura con barras de promedios y un gráfico de líneas por corrida."""
-    figure, axes = plt.subplots(1, 2, figsize=(10, 4))
+def build_figure(
+    data: Dict[str, List[float]], run_indices: Dict[str, List[int]], title: str
+) -> plt.Figure:
+    """Devuelve una figura con barras de promedios, líneas por corrida y speedup."""
+    has_both_modes = {"especulativo", "secuencial"}.issubset(data.keys())
+    num_axes = 3 if has_both_modes else 2
+    figure, axes = plt.subplots(1, num_axes, figsize=(5 * num_axes, 4))
+    if num_axes == 1:
+        axes = [axes]
+    else:
+        axes = list(axes)
 
     # Subgráfico de barras con promedios.
     ax_bar = axes[0]
@@ -76,6 +90,30 @@ def build_figure(data: Dict[str, List[float]], title: str) -> plt.Figure:
     ax_line.set_ylabel("Tiempo total (ms)")
     ax_line.set_title("Evolución por corrida")
     ax_line.legend()
+
+    if has_both_modes:
+        ax_speedup = axes[2]
+        spec_runs = run_indices.get("especulativo", [])
+        seq_runs = run_indices.get("secuencial", [])
+        spec_map = dict(zip(spec_runs, data.get("especulativo", [])))
+        seq_map = dict(zip(seq_runs, data.get("secuencial", [])))
+        common_runs = sorted(set(spec_map).intersection(seq_map))
+        speedup_values: List[float] = []
+        for run in common_runs:
+            speculative = spec_map[run]
+            sequential = seq_map[run]
+            if speculative == 0:
+                speedup_values.append(float("nan"))
+            else:
+                speedup_values.append(sequential / speculative)
+        if speedup_values:
+            ax_speedup.plot(common_runs, speedup_values, marker="o", color="seagreen")
+            ax_speedup.axhline(1.0, color="gray", linestyle="--", linewidth=1)
+            ax_speedup.set_xlabel("Corrida")
+            ax_speedup.set_ylabel("Speedup (TpO secuencial / TpO especulativo)")
+            ax_speedup.set_title("Speedup por corrida")
+        else:
+            ax_speedup.set_visible(False)
 
     figure.suptitle(title)
     figure.tight_layout()
@@ -104,11 +142,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    durations = load_totals(args.csv_path)
+    durations, run_indices = load_totals(args.csv_path)
     if not durations:
         raise SystemExit("No se encontraron datos válidos en el CSV.")
 
-    figure = build_figure(durations, title=args.title)
+    figure = build_figure(durations, run_indices, title=args.title)
     figure.savefig(args.output, dpi=150, bbox_inches="tight")
     print(f"Gráfica generada en: {args.output}")
 

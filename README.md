@@ -63,8 +63,10 @@ Al final del archivo se agrega una fila tipo `resumen` con los promedios y el sp
 
 | Estrategia | Promedio total (ms) | Speedup |
 | --- | --- | --- |
-| Especulativa | _(completar)_ | `TpO_Secuencial / TpO_Especulativo` |
-| Secuencial | _(completar)_ | 1.000 |
+| Especulativa | 21.484 | 1.159 |
+| Secuencial | 24.903 | 1.000 |
+
+> Valores obtenidos con `go run . -n 400 -umbral 1 -runs 30 -difficulty 5 -pow-data casoA -primes-limit 500000` (archivo `metricas_caseA.csv`).
 
 4. Analice también la variabilidad (desviación estándar) y discuta escenarios donde la especulación puede no aportar beneficios (por ejemplo, cuando las ramas tienen costos muy dispares).
 
@@ -81,9 +83,8 @@ La imagen `comparacion_estrategias.png` puede incorporarse al reporte final para
 Actualice el siguiente enlace con la URL de su repositorio Git hospedado:
 
 ```
-https://github.com/<usuario>/Tarea02-lenguaje-programacion
+https://github.com/bladjot/Tarea02-lenguaje-programacion
 ```
 
 ---
 
-> Nota: En este entorno no fue posible ejecutar `go run` ni `gofmt` porque Go no está instalado. Antes de entregar la tarea, compile y ejecute el proyecto localmente para validar los resultados y completar la sección de análisis.
