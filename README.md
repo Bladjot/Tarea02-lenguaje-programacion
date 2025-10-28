@@ -1,7 +1,7 @@
 # Tarea 02 – Ejecución Especulativa con Go
 
 ## Descripción
-Este proyecto implementa el patrón de **ejecución especulativa** propuesto en la consigna. El programa lanza dos goroutines (`rama_A` y `rama_B`) que resuelven tareas de cómputo intensivo en paralelo, mientras el hilo principal evalúa una condición costosa. Una vez que se conoce el resultado de la condición, la rama perdedora es cancelada mediante canales y se conserva únicamente el resultado de la rama ganadora. Además, se implementa una versión secuencial para comparar tiempos y calcular el *speedup*.
+El siguiente proyecto implementa el patrón de **ejecución especulativa** propuesto en el enunciado de la Tarea 2. El programa creado ejecuta dos goroutines (`rama_A` y `rama_B`) que resuelven tareas de cómputo intenso en paralelo, mientras un hilo principal evalúa una condición costosa para determinar cual de las 2 rutinas es la ganadora. Una vez que se conoce cual rama es la ganadora, la rama perdedora es cancelada mediante canales y se conserva únicamente el resultado de la rama ganadora. Además, se implementa una versión secuencial del programa para comparar tiempos y calcular el *speedup*.
 
 Las funciones de trabajo corresponden a las provistas en el anexo, adaptadas para soportar cancelación cooperativa:
 
@@ -9,7 +9,7 @@ Las funciones de trabajo corresponden a las provistas en el anexo, adaptadas par
 - `EncontrarPrimos` / `EncontrarPrimosWithCancel`: conteo de números primos mediante división sucesiva.
 - `CalcularTrazaDeProductoDeMatrices`: multiplicación de matrices aleatorias de tamaño `n × n` para calcular la traza.
 
-## Requisitos
+## Requisitos del programa
 - Go ≥ 1.21
 - (Opcional) Python ≥ 3.9 y `matplotlib` para graficar los resultados.
 
@@ -25,16 +25,16 @@ go run . \
   -primes-limit 500000
 ```
 
-### Flags relevantes
-- `-n`: dimensión de las matrices para `CalcularTrazaDeProductoDeMatrices`.
-- `-umbral`: se compara contra la traza para decidir la rama ganadora (`>=` elige la rama A).
-- `-nombre_archivo`: archivo CSV donde se guardan todas las métricas.
-- `-runs`: número de corridas por estrategia (especulativa/secuencial).
-- `-difficulty`: número de ceros iniciales en el hash del Proof-of-Work.
-- `-pow-data`: dato base concatenado en el Proof-of-Work.
-- `-primes-limit`: cota superior para la búsqueda de primos.
+### Flags importantes
+- `-n`: Esta flag determina la dimensión de las matrices para `CalcularTrazaDeProductoDeMatrices`.
+- `-umbral`: Esta flag se usa para compararla con la traza para decidir la rama ganadora (`>=` elige la rama A).
+- `-nombre_archivo`: Esta flag guardará en un archivo CSV las métricas obtenidas.
+- `-runs`: Esta flag introduce un número de corridas por estrategia (especulativa/secuencial).
+- `-difficulty`: Esta flag introduce un número de ceros iniciales en el hash del Proof-of-Work.
+- `-pow-data`: Esta flag es el dato base concatenado en el Proof-of-Work.
+- `-primes-limit`: Esta flag es la cota superior para la búsqueda de primos.
 
-El programa imprime en consola el promedio de cada estrategia y el speedup estimado; la información detallada queda en el CSV indicado.
+Cuando el programa termina este imprime en consola el promedio de cada estrategia y el speedup estimado, la información obtenida queda en un archivo CSV.
 
 ## Archivo de métricas
 Cada fila del CSV representa el resultado de una rama:
@@ -57,6 +57,7 @@ Cada fila del CSV representa el resultado de una rama:
 Al final del archivo se agrega una fila tipo `resumen` con los promedios y el speedup calculado automáticamente por el programa.
 
 ## Análisis de rendimiento
+Para analizar el rendimiento del programa se deben ejecutar los siguientes pasos:
 1. Ejecute el programa con el conjunto de parámetros que desee estudiar (ej. los valores por defecto).
 2. Obtenga los promedios desde la fila `resumen` del CSV o desde la salida estándar.
 3. Complete la siguiente tabla en su informe:
@@ -68,23 +69,15 @@ Al final del archivo se agrega una fila tipo `resumen` con los promedios y el sp
 
 > Valores obtenidos con `go run . -n 400 -umbral 1 -runs 30 -difficulty 5 -pow-data casoA -primes-limit 500000` (archivo `metricas_caseA.csv`).
 
-4. Analice también la variabilidad (desviación estándar) y discuta escenarios donde la especulación puede no aportar beneficios (por ejemplo, cuando las ramas tienen costos muy dispares).
+## Gráficos
+Se incluyo en esta tarea un archhivo que incluye `plot_metrics.py`, este genera un archivo PNG con un gráfico de barras (promedios) y un gráfico de líneas (evolución por corrida) para los tiempos totales. Para esto se requiere Python y `matplotlib`.
 
-## Gráficas sugeridas
-Se incluye `plot_metrics.py`, que genera un archivo PNG con un gráfico de barras (promedios) y un gráfico de líneas (evolución por corrida) para los tiempos totales. Requiere Python y `matplotlib`.
-
-```bash
+La ejecución del archivo `plot_metrics.py` es con el siguiente comando:
+```
 python plot_metrics.py metricas.csv comparacion_estrategias.png
 ```
 
-La imagen `comparacion_estrategias.png` puede incorporarse al reporte final para visualizar el speedup observado.
-
 ## Enlace al repositorio
-Actualice el siguiente enlace con la URL de su repositorio Git hospedado:
-
 ```
 https://github.com/bladjot/Tarea02-lenguaje-programacion
 ```
-
----
-
